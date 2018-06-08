@@ -46,7 +46,7 @@ class ListNode(object):
 class TreeNode(object):
     """A Binary Tree Node. Height is base 0"""
     def __init__(self, val=None):
-        self._val, self._height, self._isroot = val, 0, False
+        self._val, self._height, self._isroot = val, None, False
         self._rchild = self._lchild = None
         
     @property
@@ -82,11 +82,11 @@ class TreeNode(object):
     @property
     def height(self):
         """Max of the child heights plus 1"""
-        if self.lchild is not None and self.rchild is not None:
+        if not self.isLeaf:
             self._height = max(self.rchild.height, self.lchild.height) + 1
         elif self.lchild: self._height = self.lchild.height + 1
         elif self.rchild: self._height = self.rchild.height + 1
-        else: pass
+        else: self._height = 0
         return self._height
     @height.setter
     def height(self, val): self._height = val
