@@ -9,7 +9,7 @@ class ListNode(object):
     def __init__(self, val=None, nextnode=None):
         self._val, self._next = val, nextnode
         
-    def __del__(self): self = None
+    def __del__(self): print("destroying {}".format(self))
     
     @property
     def val(self): return self._val
@@ -44,31 +44,23 @@ class ListNode(object):
     
     
 class TreeNode(object):
-    """A Binary Tree Node. Height is base 0"""
+    """A Binary Tree Node. Height is base 0. an asterisk (val*) indicates
+    that the node is the root node"""
     def __init__(self, val=None):
-        self._val, self._height, self._isroot = val, None, False
+        self._val, self._height, self._isroot = val, 0, False
         self._rchild = self._lchild = None
+        
+    def __del__(self):
+        print("{} destroyed".format(self))
         
     @property
     def val(self): return self._val
-    @val.setter
-    def val(self, node): self._val = node
     
     @property
     def lchild(self): return self._lchild
-    @lchild.setter
-    def lchild(self, node):
-        if isinstance(node, TreeNode) or node is None: self._lchild = node
-        else: raise TypeError\
-        ('next node must be of type TreeNode. Found{}'.format(type(node)))
     
     @property
     def rchild(self): return self._rchild
-    @rchild.setter
-    def rchild(self, node):
-        if isinstance(node, TreeNode) or node is None: self._rchild = node
-        else: raise TypeError\
-        ('next node must be of type TreeNode. Found{}'.format(type(node)))
         
     @property
     def children(self): return self.lchild, self.rchild
@@ -82,15 +74,13 @@ class TreeNode(object):
     @property
     def height(self):
         """Max of the child heights plus 1"""
-        if not self.isLeaf:
-            self._height = max(self.rchild.height, self.lchild.height) + 1
+        if self.lchild is not None and self.rchild is not None:
+            self._height = max(self.rchild._height, self.lchild._height) + 1
         elif self.lchild: self._height = self.lchild.height + 1
         elif self.rchild: self._height = self.rchild.height + 1
-        else: self._height = 0
+        else: pass
         return self._height
-    @height.setter
-    def height(self, val): self._height = val
-    
+       
     def __add__(self, other):
         if isinstance(other, type(self._val)): return self.val + other
         elif isinstance(other, TreeNode): return self.val + other.val
@@ -106,8 +96,8 @@ class TreeNode(object):
         
     def __lt__(self, other):
         if isinstance(other, TreeNode): return self.val < other.val
-        if not isinstance(other, type(self.val)):raise TypeError\
-        ("'<' not supported between instances of '{}' and '{}'".format(type(self.val), type(other)))
+        #if not isinstance(other, type(self.val)):raise TypeError\
+        #("'<' not supported between instances of '{}' and '{}'".format(type(self.val), type(other)))
         else: return self.val < other
         
     def __gt__(self, other):
@@ -117,14 +107,14 @@ class TreeNode(object):
         else: return self.val > other
         
     def __eq__(self, other):
-        #return self.val == other.val
         if isinstance(other, TreeNode): return self.val == other.val
-        #if not isinstance(other, type(self.val)):raise TypeError\
-        #("'==' not supported between instances of '{}' and '{}'".format(type(self.val), type(other)))
         else: return self.val == other
         
-    def __str__(self): return str(self.val)
+    def __str__(self):
+        tag = '*' if self.isRoot else ''
+        return "{}{}".format(str(self.val), tag)
     def __repr__(self): return str(self)
+    def __hash__(self): return hash(str(self))
     
     def __iter__(self):
         """Depth First Iteration"""
@@ -133,11 +123,7 @@ class TreeNode(object):
         if self.rchild is not None: yield from self.rchild
         
     def __getitem__(self, key):
-        if not isinstance(key, int) or not isinstance(key, slice): raise TypeError
-        i = 0
-        while i < key:
-            val = next(self)
-            i+=1
+        if not isinstance(key, int): raise TypeError
         return self[key].val
         
     def __reversed__(self):
@@ -287,15 +273,13 @@ class Bst(object):
                 for i in val:
                     self.add(i)
                     
-    def __del__(self):
-        self._root = None
+    #def __del__(self):
+        #self._root = self.root._lchild = self.root._rchild = None
     
     def __len__(self): return self._size
     
     @property
     def root(self): return self._root
-    @root.setter
-    def root(self, node): self._root = node
     
     @property
     def height(self):
@@ -309,7 +293,7 @@ class Bst(object):
         """Adds an item to the tree recursively starting from the root"""
         if self.isEmpty():
             newNode = TreeNode(val)
-            self.root, newNode._isroot = newNode, True
+            self._root, newNode._isroot = newNode, True
         if type(val) == type(self.root.val):
             self._add(val, self.root)
             self._size +=1
@@ -320,40 +304,40 @@ class Bst(object):
         """Actual private recursive insert for non-root nodes"""
         if val > currNode:
             if currNode.rchild is None:
-                currNode.rchild = TreeNode(val)
+                currNode._rchild = TreeNode(val)
                 if currNode.lchild is not None:
-                    currNode.height = max(currNode.lchild.height, currNode.rchild.height) + 1
-                else: currNode.height +=1
+                    currNode._height = max(currNode.lchild.height, currNode.rchild.height) + 1
+                else: currNode._height +=1
             else: self._add(val, currNode.rchild)
         elif val < currNode:
             if currNode.lchild is None:
-                currNode.lchild = TreeNode(val)
+                currNode._lchild = TreeNode(val)
                 if currNode.rchild is not None:
-                    currNode.height = max(currNode.lchild.height, currNode.rchild.height) + 1
-                else: currNode.height +=1
+                    currNode._height = max(currNode.lchild.height, currNode.rchild.height) + 1
+                else: currNode._height +=1
             else: self._add(val, currNode.lchild)
     
     def __repr__(self):
         """Prints all tree node values Depth First in list form"""
-        return str([node for node in self])
+        return str({node: node.children for node in self})
     
     def __iter__(self):
         if self.root is not None: return iter(self.root)
         else: return iter([])
                     
-    def __contains__(self, val):
-        print("searching for " + str(val) + " " + str(type(val)))
+    def __contains__(self, val) -> bool:
         if type(val) == type(self.root.val):
-            return self._find(val, self.root)
-        else:
-            raise TypeError\
-            ('Search value must be of type {}.'.format(type(self.root.val)))
+            try: return self._find(val, self.root)
+            except KeyError: return False
+        else: raise TypeError\
+        ('Search value must be of type {}.'.format(type(self.root.val)))
     
     def __getitem__(self, key) -> TreeNode:
-        """Retrieves a node. If the target node is not found
+        """Retrieves a subtree. If the target node is not found
         or if the key is of the wrong type, we raise a KeyError."""
-        try: return self._find(key, self.root)
-        except TypeError: raise KeyError(str(key))
+        node = self._find(key, self.root)
+        if node is not None: return node
+        else: raise KeyError(str(key))
     
     def _find(self, val, currNode):
         """Recursive search. Returns the target node"""
@@ -363,17 +347,17 @@ class Bst(object):
             return self._find(val, currNode.rchild)
         elif val < currNode and currNode.lchild != None:
             return self._find(val, currNode.lchild)
-        else: raise KeyError(str(val))
+        else: return None
     
-    def _childandParent(self, val, currNode) -> tuple:
+    def _childAndParent(self, val, currNode) -> tuple:
         """Recursive search. Returns the target node and its parent"""
         if val in currNode.children:
             return self[val], currNode
         elif val > currNode and currNode.rchild != None:
-            return self._childandParent(val, currNode.rchild)
+            return self._childAndParent(val, currNode.rchild)
         elif val < currNode and currNode.lchild != None:
-            return self._childandParent(val, currNode.lchild)
-        else: return (self[val], currNode)
+            return self._childAndParent(val, currNode.lchild)
+        else: return (self[val], None)
             
     def remove(self, val):
         """Removes a tree node containing a specified value
@@ -383,43 +367,45 @@ class Bst(object):
         children to that of the target node and redefine the target node as
         that child node. If there is no left sub-tree, we travel right and find
         a node with no left child (min of the right sub-tree) and perform substitution."""
-        targetNode, parent = self._childandParent(val, self.root)
-        if targetNode:
-            if targetNode.isLeaf:
-                if parent.lchild == targetNode: parent.lchild = None
-                elif parent.rchild == targetNode: parent.rchild = None
-                del targetNode
+        targetNode, parent = self._childAndParent(val, self.root)
+        if targetNode is not None:
+            # if we are deleting a leaf, set the parent's child to none
+            if targetNode.isLeaf and parent is not None:
+                if parent._lchild == targetNode: parent._lchild = None
+                elif parent._rchild == targetNode: parent._rchild = None
             
             else:
-                if targetNode.isRoot: self.__del__()
-                
+                # - SubNode finding logic
+                # check if the target node is not minimum,
+                # if so, then the substitute is min
                 if targetNode != min(targetNode):
-                    print("you are attemtping to remove the min")
                     subNode = min(targetNode)
-                else: subNode = targetNode.rchild
-                
-                if parent.lchild == targetNode: parent.lchild = subNode
-                elif parent.rchild == targetNode: parent.rchild = subNode
-                
-                if subNode not in targetNode.children:
-                    subNode.lchild, subNode.rchild = targetNode.lchild, targetNode.rchild
-                elif subNode == targetNode.lchild:
-                    subNode.lchild, subNode.rchild = None, targetNode.rchild
-                else:
-                    subNode.lchild, subNode.rchild = targetNode.lchild, None
                     
-                del targetNode
+                # if the target node is the minimum (lchild=None),
+                # then the substitute is the minimum of the right subTree
+                else: subNode = min(targetNode.rchild)
+                
+                # - Replacement Logic (parent)
+                if parent is not None:
+                    if parent._lchild == targetNode: parent._lchild = subNode
+                    elif parent._rchild == targetNode: parent._rchild = subNode
+                
+                # - Replacement Logic (children)
+                if subNode not in targetNode.children:
+                    subNode._lchild, max(subNode)._rchild = targetNode.lchild, targetNode.rchild
+                elif subNode == targetNode.lchild:
+                    max(subNode)._rchild = targetNode.rchild
+                
+                if targetNode.isRoot: subNode._isroot = True
                 
             bst._size -=1
 
 if __name__ == '__main__':
     
     bst = Bst()
-    bst2 = Bst()
-    def fillTree(tree, num_elems=10, max_int=100000):
+    def fillTree(tree, num_elems=10, max_int=100):
         from random import randint
         for _ in range(num_elems): tree.add(randint(0, max_int))
         return tree
     
     fillTree(bst)
-    fillTree(bst2)
